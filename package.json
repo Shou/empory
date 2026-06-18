@@ -1,0 +1,11 @@
+{
+  "name": "birdshit",
+  "private": true,
+  "workspaces": [
+    "front",
+    "tests"
+  ],
+  "dependencies": {
+    "typescript": "6.0.2"
+  }
+}
