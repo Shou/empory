@@ -1,2 +1,5 @@
 packages:
   - "front"
+  - "config"
+  - "tests/api"
+  - "tests/e2e"

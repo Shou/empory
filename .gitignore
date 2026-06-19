@@ -1,4 +1,6 @@
 .env
+.env.*
+!.env.dev
 .direnv
 node_modules
 **/node_modules

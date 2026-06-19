@@ -1,7 +1,7 @@
 birdshit
 ========
 
-This is an evil microblogging platform written by a human in Rust/axum + TypeScript/React.
+Evil microblogging platform made by a human in Rust/axum + TypeScript/React.
 
 
 ## Running the project
@@ -38,4 +38,4 @@ I'll make it less annoying in the near future...
 
 ## AI disclosure
 
-I use Mistral Vibe to rubber duck, for documentation, examples, debugging. No direct code generation, and it doesn't have access to my codebase. Why not? Because I'm using this project to learn Rust and other tools - AI generating everything defeats the purpose. I was inspired to do this project while reading Designing Data Intensive Applications (2nd ed).
+I use Mistral Vibe to rubber duck, for documentation, examples, debugging. No direct code generation - it doesn't have access to my codebase. Why not? Because I'm using this project to learn Rust and other tools, AI generating everything defeats the purpose - I was inspired to do this project while reading Designing Data Intensive Applications (2nd ed).

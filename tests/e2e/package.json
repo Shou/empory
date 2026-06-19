@@ -1,0 +1,18 @@
+{
+  "name": "@birdshit/tests/e2e",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.28.0",
+  "dependencies": {
+    "@birdshit/config": "workspace:*",
+    "@playwright/test": "1.56.0",
+    "@types/node": "^26.0.0"
+  }
+}
