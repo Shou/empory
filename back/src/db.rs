@@ -1,16 +1,10 @@
-use axum::{
-    routing::{get, post},
-    extract::{FromRef, State},
-    Router,
-    Json
-};
+use axum::extract::{FromRef};
 use serde::{Deserialize, Serialize};
-use tokio::net::TcpListener;
 use sqlx::{
     postgres::PgPoolOptions,
     PgPool,
 };
-use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct Config {
@@ -26,11 +20,20 @@ pub struct Db(pub PgPool);
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
-    pub id: i32,
+    pub id: crate::models::user::UserId,
     pub username: String,
     pub email: String,
     pub password_hash: String,
 }
+
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct Post {
+    pub id: i32,
+    pub user_id: crate::models::user::UserId,
+    pub content: String,
+    pub created_at: sqlx::types::chrono::DateTime<sqlx::types::chrono::Utc>,
+}
+
 
 pub async fn get_pool(config: &Config) -> PgPool {
     let url = format!("postgres://{}:{}@{}:{}/{}", config.admin, config.password, config.url, config.port, config.database);
@@ -42,18 +45,42 @@ pub async fn get_pool(config: &Config) -> PgPool {
     pool
 }
 
-pub async fn get_user(pool: &PgPool, user_id: i32) -> Result<User, sqlx::Error> {
-    sqlx::query_as::<_, User>("SELECT id, username, email FROM users WHERE id = $1")
+pub async fn get_user_by_id(pool: &PgPool, user_id: i32) -> Result<User, sqlx::Error> {
+    sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
         .bind(user_id)
         .fetch_one(pool)
         .await
 }
 
+pub async fn get_user_by_username(pool: &PgPool, username: &String) -> Result<User, sqlx::Error> {
+    sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = $1")
+        .bind(username)
+        .fetch_one(pool)
+        .await
+}
+
+pub async fn get_all_posts(pool: &PgPool) -> Result<Vec<Post>, sqlx::Error> {
+    sqlx::query_as::<_, Post>("SELECT * FROM posts ORDER BY created_at DESC LIMIT 100")
+        .fetch_all(pool)
+        .await
+}
+
+pub async fn get_posts_by_user_id(pool: &PgPool, user_id: &Uuid) -> Result<Vec<Post>, sqlx::Error> {
+    sqlx::query_as::<_, Post>("SELECT * FROM posts WHERE user_id = $1 ORDER BY created_at DESC")
+        .bind(user_id)
+        .fetch_all(pool)
+        .await
+}
+
+pub async fn insert_post(pool: &PgPool, user_id: &Uuid, content: &String) -> Result<Post, sqlx::Error> {
+    sqlx::query_as("INSERT INTO posts (user_id, content) VALUES ($1, $2) RETURNING *")
+        .bind(user_id)
+        .bind(content)
+        .fetch_one(pool)
+        .await
+}
 
 pub async fn connect() -> (Db, Config) {
-    dotenvy::dotenv();
-
-    // TODO make const? (can we)
     let config = Config {
         admin: std::env::var("POSTGRES_USER").expect("DATABASE_USER missing in .env"),
         password: std::env::var("POSTGRES_PASSWORD").expect("DATABASE_PASSWORD missing in .env"),

@@ -4,7 +4,7 @@ import { type CollectionDefinition } from 'postman-collection'
 
 export const collection: CollectionDefinition = {
     info: {
-        name: "Back API",
+        name: "Back API /auth",
     },
     item: [
         {
@@ -20,8 +20,53 @@ export const collection: CollectionDefinition = {
                             mode: "raw",
                             raw: JSON.stringify({
                                 email: "{{$randomEmail}}",
-                                username: "{{$randomUserName}}",
-                                password: "test test test",
+                                username: "{{authUsername}}",
+                                password: "{{authPassword}}",
+                            }),
+                        },
+                    },
+                },
+                {
+                    name: "Login WRONG user",
+                    request: {
+                        method: "POST",
+                        url: "{{baseUrl}}/auth/login",
+                        header: [{ key: "Content-Type", value: "application/json" }],
+                        body: {
+                            mode: "raw",
+                            raw: JSON.stringify({
+                                username: "{{authWrongname}}",
+                                password: "{{authPassword}}",
+                            }),
+                        },
+                    },
+                },
+                {
+                    name: "Login WRONG password",
+                    request: {
+                        method: "POST",
+                        url: "{{baseUrl}}/auth/login",
+                        header: [{ key: "Content-Type", value: "application/json" }],
+                        body: {
+                            mode: "raw",
+                            raw: JSON.stringify({
+                                username: "{{authUsername}}",
+                                password: "wrong wrong wrong",
+                            }),
+                        },
+                    },
+                },
+                {
+                    name: "Login user",
+                    request: {
+                        method: "POST",
+                        url: "{{baseUrl}}/auth/login",
+                        header: [{ key: "Content-Type", value: "application/json" }],
+                        body: {
+                            mode: "raw",
+                            raw: JSON.stringify({
+                                username: "{{authUsername}}",
+                                password: "{{authPassword}}",
                             }),
                         },
                     },

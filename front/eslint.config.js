@@ -19,4 +19,15 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  reactRefresh.configs.vite({
+    extraHOCs: [
+      "createFileRoute",
+      "createLazyFileRoute",
+      "createRootRoute",
+      "createRootRouteWithContext",
+      "createLink",
+      "createRoute",
+      "createLazyRoute",
+    ],
+  })
 ])
