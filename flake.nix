@@ -1,7 +1,7 @@
 {
   description = "birdshit dev env";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/36a601196c4ebf49e035270e10b2d103fe39076b";
+    nixpkgs.url = "github:NixOS/nixpkgs/0ad6f47ea4fe188f4bc8f0380f93ae8523337c6c";
     flake-utils.url = "github:numtide/flake-utils";
   };
   outputs = { self, nixpkgs, flake-utils }:
@@ -16,10 +16,11 @@
             rust-analyzer
             rustPlatform.rustLibSrc
             pkg-config
-            nodejs_20
+            nodejs_24
             pnpm
             postman
             playwright-driver.browsers
+            terraform terraform-ls
           ];
 
           shellHook = ''

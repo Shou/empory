@@ -3,10 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import * as Auth from '../../api/auth'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-
-const isFormDataString = (fd: FormDataEntryValue | null): fd is string => {
-    return typeof fd === "string"
-}
+import { isFormDataString } from '../../lib/utils'
 
 export function RegisterComponent() {
   const navigate = useNavigate({ from: "/login" })

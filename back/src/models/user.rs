@@ -2,11 +2,18 @@
 use serde::{Deserialize, Serialize};
 
 
-#[derive(Clone, Serialize, Deserialize, sqlx::FromRow, sqlx::Type)]
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, sqlx::Type)]
 #[sqlx(transparent)]
 pub struct UserId(pub sqlx::types::Uuid);
 
-#[derive(Serialize, Deserialize, sqlx::FromRow)]
+impl UserId {
+    pub fn to_uuid(&self) -> &sqlx::types::Uuid {
+        let UserId(uuid) = self;
+        uuid
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
     pub id: UserId,
     pub username: String,

@@ -2,16 +2,17 @@ import * as React from "react"
 import { Link, Outlet, useNavigate } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 import * as Auth from '../../api/auth'
-import { Spinner } from "../ui/spinner"
 import { useSelector } from "@tanstack/react-store"
+import { getAvatar } from "../../api/profile"
+import { useQuery } from "@tanstack/react-query"
 
 
 export function Header() {
   return (
     <Link to="/">
-      <h1 className="inline-flex p-2 text-transparent bg-clip-text font-bold bg-linear-to-r from-[#e3f1bd] via-[#f0f346] to-[#e3f1bd]">
+      <h2 className="inline-flex p-2 text-transparent bg-clip-text font-bold bg-linear-to-r from-[#e3f1bd] via-[#f0f346] to-[#e3f1bd]">
         BIRDSHIT
-      </h1>
+      </h2>
     </Link>
   )
 }
@@ -38,6 +39,14 @@ export const Shell: React.FC = () => {
   const navigate = useNavigate()
   const token = useSelector(Auth.store, (state: Auth.Store) => state.token)
 
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile"],
+    // NOTE token won't be null here because of the enabled field
+    // and we can't put React hooks behind if-statements
+    queryFn: () => getAvatar(token!),
+    enabled: token !== null,
+  })
+
   React.useEffect(() => {
     console.log("wtf")
     Auth.getRefresh().then((resp: Response | null) => {
@@ -45,18 +54,21 @@ export const Shell: React.FC = () => {
     })
   }, [])
 
+  console.log(profile, "profiel???")
+  if (!isLoading && profile == null) {
+    navigate({ to: "/onboarding" })
+  }
+
   if (token === null) {
-    return (
-      <Spinner />
-    )
+    navigate({ to: "/" })
   }
 
   return (
     <>
       <div className="grid grid-cols-1 content-between min-h-screen bg-linear-to-r from-[#c2dd05] via-[#96b203] to-[#c2dd05]">
           <Header />
-          <main className="flex justify-center">
-              <Outlet />
+          <main className="flex justify-center m-8">
+            <Outlet />
           </main>
           <Footer />
       </div>

@@ -11,6 +11,18 @@ services:
       - ${POSTGRES_PORT}:5432
     volumes:
       - postgres_data:/var/lib/postgresql
+  rustfs:
+    image: rustfs/rustfs
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs_data:/data
+    environment:
+      RUSTFS_ACCESS_KEY: ${AWS_ACCESS_KEY_ID}
+      RUSTFS_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}
+    command: /data
 
 volumes:
   postgres_data:
+  rustfs_data:

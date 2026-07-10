@@ -3,3 +3,5 @@ pub mod logout;
 pub mod posts;
 pub mod register;
 pub mod refresh;
+pub mod profile;
+pub mod users;

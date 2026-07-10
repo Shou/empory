@@ -44,7 +44,7 @@ pub async fn auth_middleware(
     // HACK? idk seems like this isnt a good way to scale this...
     let url = request.uri().path();
     println!("auth_middleware {:?}", &url);
-    if url == "/auth/login" || url == "/auth/register" || url == "/auth/refresh" {
+    if url.starts_with("/auth") {
         return Ok(next.run(request).await)
     }
 

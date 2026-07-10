@@ -13,7 +13,7 @@ interface CreatePost {
     content: string,
 }
 
-export const getPosts = async (token: string): Promise<Array<Post>> => {
+export const getAllPosts = async (token: string, date: Date): Promise<Array<Post>> => {
     const url = BASE_URL + "/posts"
     const resp = await fetch(url, {
         method: "GET",
@@ -21,6 +21,20 @@ export const getPosts = async (token: string): Promise<Array<Post>> => {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + token,
         },
+        body: JSON.stringify({ timestamp: date.toISOString() }),
+    })
+    return resp.json()
+}
+
+export const getFeed = async (token: string, date: Date): Promise<Array<Post>> => {
+    const url = BASE_URL + "/feed"
+    const resp = await fetch(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token,
+        },
+        body: JSON.stringify({ timestamp: date.toISOString() }),
     })
     return resp.json()
 }

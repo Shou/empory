@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FeedRouteImport } from './routes/feed'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogoutRoute = LogoutRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/feed': typeof FeedRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/feed': typeof FeedRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,22 @@ export interface FileRoutesById {
   '/feed': typeof FeedRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/feed' | '/login' | '/logout' | '/register'
+  fullPaths: '/' | '/feed' | '/login' | '/logout' | '/onboarding' | '/register'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/feed' | '/login' | '/logout' | '/register'
-  id: '__root__' | '/' | '/feed' | '/login' | '/logout' | '/register'
+  to: '/' | '/feed' | '/login' | '/logout' | '/onboarding' | '/register'
+  id:
+    | '__root__'
+    | '/'
+    | '/feed'
+    | '/login'
+    | '/logout'
+    | '/onboarding'
+    | '/register'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +92,7 @@ export interface RootRouteChildren {
   FeedRoute: typeof FeedRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
+  OnboardingRoute: typeof OnboardingRoute
   RegisterRoute: typeof RegisterRoute
 }
 
@@ -86,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/logout': {
@@ -124,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeedRoute: FeedRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
+  OnboardingRoute: OnboardingRoute,
   RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
