@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
-
 import * as ProfileAPI from '../api/profile'
-import * as Auth from '../api/auth'
-import { useSelector } from '@tanstack/react-store'
+import { getToken, useToken } from '../auth/tokenManager'
+import { useTransition } from 'react'
+import { Spinner } from '../components/ui/spinner'
 
 export const Route = createFileRoute('/onboarding')({
   component: RouteComponent,
@@ -12,15 +12,19 @@ export const Route = createFileRoute('/onboarding')({
 
 function RouteComponent() {
   const navigate = useNavigate({ from: "/onboarding" })
-  const token = useSelector(Auth.store, (state: Auth.Store) => state.token)
+  const [isPending, startTransition] = useTransition()
 
   const uploadAvatar = (event: React.SyntheticEvent<HTMLFormElement>) => {
     console.log("uploadAvatar onSubmit")
     event.preventDefault()
-    if (token === null) return
-    const formData = new FormData(event.currentTarget)
-    ProfileAPI.uploadAvatar(token, formData).then((response) => {
+    const elem = event.currentTarget
+    startTransition(async () => {
+      const token = await getToken()
+      if (token === null) return
+      const formData = new FormData(elem)
+      const url = await ProfileAPI.uploadAvatar(token, formData)
       navigate({ to: "/feed" })
+      console.log("Avatar uploaded = ", url)
     })
   }
 
@@ -30,11 +34,17 @@ function RouteComponent() {
         <CardHeader>
           <CardTitle>Select avatar</CardTitle>
           <CardAction>
-            <Button type="submit" disabled={token === null}>Submit</Button>
+            {
+              isPending ? (
+                <Spinner />
+              ) : (
+                <Button type="submit">Submit</Button>
+              )
+            }
           </CardAction>
         </CardHeader>
         <CardContent>
-          <input name="avatar" type="file" disabled={token === null} />
+          <input name="avatar" type="file" />
         </CardContent>
       </Card>
     </form>

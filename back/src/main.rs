@@ -3,10 +3,11 @@ pub mod auth;
 pub mod db;
 pub mod models;
 pub mod routes;
+pub mod errors;
+pub mod worker;
 
 use axum::{
-    routing::{get, post, delete},
-    Router,
+    Router, extract::DefaultBodyLimit, routing::{delete, get, post}
 };
 use tokio::net::TcpListener;
 use tower_http::{trace::TraceLayer};
@@ -43,6 +44,7 @@ async fn main() {
             panic!("failed to load S3 credentials from env")
         };
     
+    let wpool = pool.clone();
     let state = AppState {
         pool,
         config,
@@ -55,23 +57,36 @@ async fn main() {
         .with_target(false)
         .init();
 
-    let app = Router::new()
+    let public_routes = Router::new()
+        .route("/auth/register", post(crate::routes::auth::register))
+        .route("/auth/login", post(crate::routes::auth::login))
+        .route("/auth/logout", post(crate::routes::auth::logout))
+        .route("/auth/refresh", get(crate::routes::auth::refresh));
+
+    let private_routes = Router::new()
         .route("/", get(|| async { "omg hi baddie 💅" }))
-        .route("/auth/register", post(crate::routes::register::register))
-        .route("/auth/login", post(crate::routes::login::login))
-        .route("/auth/logout", post(crate::routes::logout::logout))
-        .route("/auth/refresh", get(crate::routes::refresh::refresh))
         .route("/posts", get(crate::routes::posts::get_posts))
         .route("/posts", post(crate::routes::posts::create_post))
+        .route("/posts/{post_id}/like", post(crate::routes::posts::like_post))
+        .route("/posts/{post_id}/like", delete(crate::routes::posts::unlike_post))
         //.route("/posts/{post_id}", get(crate::routes::posts::get_user_posts))
-        .route("/feed", post(crate::routes::posts::create_post))
+        .route("/feed", get(crate::routes::posts::get_feed))
+        .route("/me", get(crate::routes::profile::get_status))
         .route("/profile/avatar", get(crate::routes::profile::get_avatar))
-        .route("/profile/avatar", post(crate::routes::profile::upload_avatar))
+        .route(
+            "/profile/avatar",
+            post(crate::routes::profile::upload_avatar).layer(DefaultBodyLimit::max(2 * 1024 * 1024))
+        )
+        .route("/user/{user_id}/follow", get(crate::routes::users::get_followers))
         .route("/user/{user_id}/follow", post(crate::routes::users::follow_user))
         .route("/user/{user_id}/follow", delete(crate::routes::users::unfollow_user))
         .route("/user/{user_id}/posts", get(crate::routes::posts::get_user_posts))
 
-        .layer(axum::middleware::from_fn_with_state(state.clone(), crate::auth::middleware::auth_middleware))
+        .layer(axum::middleware::from_fn_with_state(state.clone(), crate::auth::middleware::auth_middleware));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(private_routes)
         .layer(
             tower::ServiceBuilder::new().layer(TraceLayer::new_for_http())
         )
@@ -85,7 +100,12 @@ async fn main() {
                 )
         )
         .layer(tower_cookies::CookieManagerLayer::new())
+        .layer(DefaultBodyLimit::max(1024 * 1024))
         .with_state(state);
+
+    tokio::spawn(async move {
+        worker::timeline_worker(wpool).await;
+    });
 
     let url = "0.0.0.0:".to_string() + &std::env::var("BACK_PORT").unwrap_or("3000".to_string());
     let listener = TcpListener::bind(url).await.unwrap();

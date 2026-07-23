@@ -12,7 +12,7 @@ export interface Follow {
 }
 
 export const followUser = async (token: string, user_id: string): Promise<Follow> => {
-    const url = `${BASE_URL}/users/${user_id}/follow`
+    const url = `${BASE_URL}/user/${user_id}/follow`
     const resp = await fetch(url, {
         method: "POST",
         headers: {
@@ -23,7 +23,7 @@ export const followUser = async (token: string, user_id: string): Promise<Follow
 }
 
 export const unfollowUser = async (token: string, user_id: string): Promise<Follow> => {
-    const url = `${BASE_URL}/users/${user_id}/follow`
+    const url = `${BASE_URL}/user/${user_id}/follow`
     const resp = await fetch(url, {
         method: "DELETE",
         headers: {

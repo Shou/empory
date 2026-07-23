@@ -1,7 +1,4 @@
-pub mod login;
-pub mod logout;
+pub mod auth;
 pub mod posts;
-pub mod register;
-pub mod refresh;
 pub mod profile;
 pub mod users;

@@ -1,41 +1,47 @@
-birdshit
-========
+birdsht
+=======
 
 Evil microblogging platform made by a human in Rust/axum + TypeScript/React.
 
 
 ## Running the project
 
-Right now:
+```bash
+pnpm run --filter=front dev --host
+cd back; cargo run
+cd docker; docker compose build && docker compose --env-file ../.env.dev up
+```
 
-1. cd front && pnpm run dev --host
-2. cd back && cargo run
-3. docker-compose up
-
-I'll make it less annoying in the near future...
+This will improve, see: [planned](#Planned)
 
 ## Project structure
 
 - back/ - Rust web backend / APIs
 - front/ - TypeScript web frontend
-- db/ - schemas
+- docker/ - docker config, PostgreSQL, RustFS
+- infra/ - terraform config for RustFS / S3
 - tests/ - Postman, Playwright tests
 
-## functional reqs
+## Planned
 
-1. Auth. User registration, login.
-2. Posts. Text-only posts. <512 char
-3. Feed. View of ALL posts. Followed users come later.
-4. Profile. View a user's post specifically.
-5. Followed users. Now we'll need derived SQL tables, queues, etc.
+To achieve production-grade, high-availability, horizontal scaling, etc targets for a fictional level of popularity and industry standard ways of writing software, we have the following planned:
 
-## non-functional reqs
-
-1. Backend: Rust + framework.
-2. Frontend: TypeScript + React + ??
-3. Database: PostgreSQL.
-4. API: RESTful. Shared API schema + validation? OpenAPI... or?
+- Use OpenAPI or TypeSpec for cross-language API definitions
+- DB table partitioning - (cronjob? partman?)
+- DB replication and HA failover
+- CI/CD, build status
+- Backups, point-in-time recovery
+- Full-text search via Elasticsearch
+- SSL certs
+- Deploy to prod (AWS/EKS), use k8s
+- Set up reverse proxy, load balancer
+- PgBouncer for connection pooling
+- Redis cache so you can read tweets blazing fast
+- CDN
+- Replace simple Rust queue with Kafka/RabbitMQ
+- Mitigate against API replay attacks
 
 ## AI disclosure
 
-I use Mistral Vibe to rubber duck, for documentation, examples, debugging. No direct code generation - it doesn't have access to my codebase. Why not? Because I'm using this project to learn Rust and other tools, AI generating everything defeats the purpose - I was inspired to do this project while reading Designing Data Intensive Applications (2nd ed).
+I use Mistral Vibe to rubber duck, for documentation, examples, debugging. No direct code generation - it doesn't have access to my codebase. Why not? Because I'm using this project to learn new things, AI generating everything defeats the purpose - I was inspired to do this project while reading Designing Data Intensive Applications (2nd ed).
+

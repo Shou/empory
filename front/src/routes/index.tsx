@@ -1,7 +1,5 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { RegisterComponent } from '../components/auth/Register'
-import { useSelector } from '@tanstack/react-store'
-import * as Auth from '../api/auth'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { LoginComponent } from '../components/auth/Login'
 
@@ -10,14 +8,6 @@ export const Route = createFileRoute('/')({
 })
 
 function RouteComponent() {
-  const navigate = useNavigate({ from: "/" })
-  const token = useSelector(Auth.store, (state: Auth.Store) => state.token)
-
-  if (token !== null) {
-    navigate({ to: "/feed" })
-    return <></>
-  }
-
   return (
     <div className="p-px rounded-sm bg-linear-to-r from-white to-lime-50">
       <div className="flex flex-row w-2xl bg-white">

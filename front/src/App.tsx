@@ -5,8 +5,9 @@ import {
 } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 import { createRouter } from '@tanstack/react-router'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createStore } from '@tanstack/react-store'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from './auth/tokenManager'
+
 
 
 
@@ -14,9 +15,10 @@ const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   scrollRestoration: true,
+  context: {
+    client: queryClient,
+  }
 })
-
-const queryClient = new QueryClient()
 
 function App() {
   return (

@@ -4,9 +4,18 @@ import * as Auth from '../../api/auth'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { isFormDataString } from '../../lib/utils'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 export function RegisterComponent() {
-  const navigate = useNavigate({ from: "/login" })
+  const queryClient = useQueryClient()
+  const navigate = useNavigate({ from: "/register" })
+  const register = useMutation({
+    ...Auth.registerMutation,
+    onSuccess: async (json) => {
+      queryClient.setQueryData(["refresh"], json)
+      await navigate({ to: "/feed" })
+    },
+  })
   const onSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
     console.log("onSubmit")
     event.preventDefault()
@@ -17,14 +26,7 @@ export function RegisterComponent() {
     const password = formData.get("regPassword")
 
     if (isFormDataString(email) && isFormDataString(username) && isFormDataString(password)) {
-      Auth.sendRegister(email, username, password).then(resp => {
-          console.log(resp)
-          navigate({ to: "/feed" })
-      }).catch((err: Error) => {
-          console.error(err)
-      })
-    } else {
-      // throw error
+      register.mutate({ email, username, password })
     }
   }
   return (

@@ -1,40 +1,46 @@
 import * as React from 'react'
-import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import * as PostsAPI from '../api/posts'
-import * as Auth from '../api/auth'
-import { useSelector } from '@tanstack/react-store'
 import { Spinner } from '../components/ui/spinner'
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card'
 import { getRelativeTime, isFormDataString } from '../lib/utils'
 import { Button } from '../components/ui/button'
 
 import * as UsersAPI from '../api/users'
+import { getToken, useToken } from '../auth/tokenManager'
+import * as Profile from '../api/profile'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+
+type Status = "onboarding"
+interface MeStatus {
+  status: Status,
+  avatar_url: string,
+}
 
 export const Route = createFileRoute('/feed')({
   component: RouteComponent,
+  beforeLoad: async ({ context }) => {
+    const me: MeStatus | undefined = context.client.getQueryData(["me"])
+    if (!me) throw redirect({ to: "/" })
+    else if (me.status === "onboarding") throw redirect({ to: "/onboarding" })
+  },
 })
 
 function RouteComponent() {
-  const qclient = useQueryClient()
-  const token = useSelector(Auth.store, (state: Auth.Store) => state.token)
-  const { data, error, isLoading, isError } = useQuery({
-    queryKey: ["posts"],
-    // NOTE token won't be null here because of the enabled field
-    // and we can't put React hooks behind if-statements
-    queryFn: () => PostsAPI.getAllPosts(token!, new Date()),
-    enabled: token !== null,
+  const { data: me } = useQuery(Profile.meQuery)
+  const [tab, setTab] = React.useState<"following" | "suggested">("following")
+  const { data, error, isLoading, isError, fetchNextPage } = useInfiniteQuery({
+    ...(tab === "following" ? PostsAPI.allPostsQuery : PostsAPI.feedQuery),
   })
+  const [isPosting, startTransition] = React.useTransition()
 
-  if (token === null) return <Spinner />
+  console.log(data, "data as")
+  console.log(error, "error")
 
-  console.log(data)
-
-  if (isLoading) return <>LOADING</>
-  if (isError) return <>{JSON.stringify(error)}</>
-  if (data === undefined) return <>wtf</>
-
-  const sendFollow = (user_id: string) => {
+  // this should be on each tweet card instead maybe...
+  const sendFollow = async (user_id: string) => {
+    const token = await getToken()
     UsersAPI.followUser(token, user_id)
   }
   const sendPost = (event: React.SyntheticEvent<HTMLFormElement>) => {
@@ -44,17 +50,19 @@ function RouteComponent() {
     const formData = new FormData(event.currentTarget)
     const content = formData.get("content")
 
-    if (isFormDataString(content)) {
+    if (!isFormDataString(content)) return
+
+    startTransition(async () => {
+      const token = await getToken()
       PostsAPI.createPost(token, content).then(() => {
         console.log("we postin shit")
-        // TODO in the future we'll use materialized views so this won't immediately be available
-        // instead we should query for _this user's specific tweets_ as well + combine?
-        qclient.invalidateQueries({ queryKey: ["posts"] })
+        // TODO refresh the posts view or smth...
       })
-    }
+    })
   }
 
-  const posts = data.map((post: PostsAPI.Post, ix: number) => {
+  const posts = data?.pages.flatMap(page => page) ?? []
+  const postElems = posts.map((post: PostsAPI.Post, ix: number) => {
     const relTime = getRelativeTime(new Date(post.created_at))
     return (
       <Card key={ix}>
@@ -76,20 +84,46 @@ function RouteComponent() {
       </Card>
     )
   })
+
+  let elem = null
+  if (isLoading) elem = <Spinner />
+  else if (isError) elem = <>Error: {JSON.stringify(error)}</>
+  else if (data === undefined) elem = <>no data</>
+  else elem = postElems
+
   return (
     <div className="flex flex-col gap-6">
+      <Tabs value={tab} onValueChange={tab => setTab(tab)}>
+        <TabsList>
+          <TabsTrigger value="suggested">Suggested</TabsTrigger>
+          <TabsTrigger value="following">Following</TabsTrigger>
+        </TabsList>
+        <TabsContent value="suggested">
+        </TabsContent>
+        <TabsContent value="following">
+        </TabsContent>
+      </Tabs>
       <Card>
         <CardHeader>
-          <CardTitle>Create new post</CardTitle>
+          <CardTitle>{me.username}</CardTitle>
+          <CardAction>
+            <img src={"/files" + me?.avatar_url} className='w-6 h-6' />
+          </CardAction>
         </CardHeader>
         <CardContent>
           <form onSubmit={sendPost} className="flex flex-col">
-            <textarea name="content" />
-            <Button type="submit">Submit</Button>
+            <textarea name="content" placeholder="Post something new..." />
+            {
+              isPosting ? (
+                <Spinner />
+              ) : (
+                <Button type="submit">Submit</Button>
+              )
+            }
           </form>
         </CardContent>
       </Card>
-      {posts}
+      {elem}
     </div>
   )
 }

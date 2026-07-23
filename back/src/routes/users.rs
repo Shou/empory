@@ -19,12 +19,12 @@ pub struct FollowUser {
 pub async fn follow_user(
     State(app_state): State<crate::models::app_state::AppState>,
     Extension(UserId(user_id)): Extension<UserId>,
-    Json(follow): Json<FollowUser>
+    axum::extract::Path(UserId(followed_id)): axum::extract::Path<UserId>,
 ) -> Result<Json<db::Follow>, (StatusCode, &'static str)> {
-    println!("follow_user | {:?} = {:?}", &user_id, &follow);
+    println!("follow_user | {:?} = {:?}", &user_id, &followed_id);
 
     let db::Db(pool) = app_state.pool;
-    let follow = db::follow_user(&pool, &user_id, &follow.user_id.to_uuid())
+    let follow = db::follow_user(&pool, &user_id, &followed_id)
         .await
         .map_err(|err| {
             println!("{:?}", err);
@@ -56,18 +56,17 @@ pub async fn unfollow_user(
 #[axum::debug_handler]
 pub async fn get_followers(
     State(app_state): State<crate::models::app_state::AppState>,
-    Extension(UserId(user_id)): Extension<UserId>,
     axum::extract::Path(UserId(followed_id)): axum::extract::Path<UserId>,
-) -> Result<Json<db::Follow>, (StatusCode, &'static str)> {
-    println!("follow_user | {:?} = {:?}", &user_id, &followed_id);
+) -> Result<Json<Vec<db::Follow>>, (StatusCode, &'static str)> {
+    println!("get_followers | {:?}", &followed_id);
 
     let db::Db(pool) = app_state.pool;
-    let follow = db::follow_user(&pool, &user_id, &followed_id)
+    let follows = db::get_follows(&pool, &followed_id)
         .await
         .map_err(|err| {
             println!("{:?}", err);
             (StatusCode::UNAUTHORIZED, "panther not here")
         })?;
 
-    Ok(Json(follow))
+    Ok(Json(follows))
 }

@@ -28,6 +28,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/api/, ""),
       },
+      "/files": {
+        target: "http://localhost:9000",
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/files/, ""),
+      },
     },
   },
 })

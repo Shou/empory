@@ -1,5 +1,5 @@
 {
-  "rust-analyzer.server.path": "/nix/store/z3ar062vdkigk8278bbalnz4mf4km7gl-rust-analyzer-2025-10-28/bin/rust-analyzer",
+  "rust-analyzer.server.path": "/nix/store/7jrd2fvyprl4bq8g8g1lg02vhvg5dl4d-rust-analyzer-2026-04-27/bin/rust-analyzer",
   "rust-analyzer.rustc.source": "discover",
   "rust-analyzer.cargo.sysroot": "discover",
 

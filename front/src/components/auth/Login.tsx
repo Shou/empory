@@ -3,10 +3,20 @@ import * as API from '../../api/auth'
 import { Input } from '../../components/ui/input'
 import { Button } from '../../components/ui/button'
 import { isFormDataString } from '../../lib/utils'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 
 export function LoginComponent() {
+  const queryClient = useQueryClient()
   const navigate = useNavigate({ from: "/login" })
+  const login = useMutation({
+    ...API.loginMutation,
+    onSuccess: async (json) => {
+      queryClient.setQueryData(["refresh"], json)
+      await navigate({ to: "/feed" })
+    },
+  })
+
   const onSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
     console.log("onSubmit")
     event.preventDefault()
@@ -16,12 +26,7 @@ export function LoginComponent() {
     const password = formData.get("loginPassword")
 
     if (isFormDataString(username) && isFormDataString(password)) {
-      API.sendLogin(username, password).then(resp => {
-        console.log(resp)
-        navigate({ to: "/feed" })
-      })
-    } else {
-      console.error("wtf incorrect username or password??")
+      login.mutate({ username, password })
     }
   }
 

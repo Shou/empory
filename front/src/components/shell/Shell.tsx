@@ -1,19 +1,31 @@
 import * as React from "react"
-import { Link, Outlet, useNavigate } from "@tanstack/react-router"
+import { Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
-import * as Auth from '../../api/auth'
-import { useSelector } from "@tanstack/react-store"
-import { getAvatar } from "../../api/profile"
+import * as ProfileAPI from "../../api/profile"
 import { useQuery } from "@tanstack/react-query"
 
 
+function HeaderStatus() {
+  const { data: me, isLoadingError } = useQuery(ProfileAPI.meQuery)
+  if (isLoadingError || !me) return <>not logged in</>
+  return (
+    <div className="flex flex-row">
+      {me.username}
+      <img src={"/files" + me.avatar_url} className="w-8 h-8" />
+    </div>
+  )
+}
+
 export function Header() {
   return (
-    <Link to="/">
-      <h2 className="inline-flex p-2 text-transparent bg-clip-text font-bold bg-linear-to-r from-[#e3f1bd] via-[#f0f346] to-[#e3f1bd]">
-        BIRDSHIT
-      </h2>
-    </Link>
+    <div className="flex flex-row justify-between">
+      <Link to="/">
+        <h2 className="inline-flex p-2 text-transparent bg-clip-text font-bold bg-linear-to-r from-[#e3f1bd] via-[#f0f346] to-[#e3f1bd]">
+          BIRDSHIT
+        </h2>
+      </Link>
+      <HeaderStatus />
+    </div>
   )
 }
 
@@ -36,33 +48,6 @@ export type ShellProps = {
     children: React.ReactNode,
 }
 export const Shell: React.FC = () => {
-  const navigate = useNavigate()
-  const token = useSelector(Auth.store, (state: Auth.Store) => state.token)
-
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile"],
-    // NOTE token won't be null here because of the enabled field
-    // and we can't put React hooks behind if-statements
-    queryFn: () => getAvatar(token!),
-    enabled: token !== null,
-  })
-
-  React.useEffect(() => {
-    console.log("wtf")
-    Auth.getRefresh().then((resp: Response | null) => {
-      if (resp === null || !resp.ok) navigate({ to: "/" })
-    })
-  }, [])
-
-  console.log(profile, "profiel???")
-  if (!isLoading && profile == null) {
-    navigate({ to: "/onboarding" })
-  }
-
-  if (token === null) {
-    navigate({ to: "/" })
-  }
-
   return (
     <>
       <div className="grid grid-cols-1 content-between min-h-screen bg-linear-to-r from-[#c2dd05] via-[#96b203] to-[#c2dd05]">
