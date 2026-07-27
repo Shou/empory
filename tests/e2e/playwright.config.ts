@@ -1,5 +1,5 @@
 
-import '@birdshit/config'
+import '@empory/config'
 import { defineConfig } from '@playwright/test'
 
 export default defineConfig({

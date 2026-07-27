@@ -1,5 +1,5 @@
 {
-  "name": "@birdshit/tests/api",
+  "name": "@empory/tests/api",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -12,7 +12,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.28.0",
   "dependencies": {
-    "@birdshit/config": "workspace:*",
+    "@empory/config": "workspace:*",
     "@types/newman": "^5.3.6",
     "@types/postman-collection": "^3.5.11",
     "dotenv": "^17.4.2",

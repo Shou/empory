@@ -9,4 +9,4 @@ const envPath = fileURLToPath(
 const result = dotenv.config({
     path: envPath,
 })
-console.log("@birdshit/config loaded:", envPath)
+console.log("@empory/config loaded:", envPath)

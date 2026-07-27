@@ -7,5 +7,5 @@ const result = dotenv.config({
     path: envPath,
 });
 console.log(result);
-console.log("@birdshit/config loaded: ", envPath);
+console.log("@empory/config loaded: ", envPath);
 //# sourceMappingURL=index.js.map

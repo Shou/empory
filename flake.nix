@@ -1,5 +1,5 @@
 {
-  description = "birdshit dev env";
+  description = "empory dev env";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/0ad6f47ea4fe188f4bc8f0380f93ae8523337c6c";
     flake-utils.url = "github:numtide/flake-utils";

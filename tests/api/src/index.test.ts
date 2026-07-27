@@ -1,5 +1,5 @@
 
-import '@birdshit/config'
+import '@empory/config'
 import { it, expect } from 'vitest'
 import newman from 'newman'
 import { collection as authCollection } from './collections/auth.collection'

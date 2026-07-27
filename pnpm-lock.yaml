@@ -129,7 +129,7 @@ importers:
 
   tests/api:
     dependencies:
-      '@birdshit/config':
+      '@empory/config':
         specifier: workspace:*
         version: link:../../config
       '@types/newman':
@@ -156,7 +156,7 @@ importers:
 
   tests/e2e:
     dependencies:
-      '@birdshit/config':
+      '@empory/config':
         specifier: workspace:*
         version: link:../../config
       '@playwright/test':

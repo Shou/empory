@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let fhs = pkgs.buildFHSEnv {
-    name = "birdshit-fhs";
+    name = "empory-fhs";
     targetPkgs = pkgs: with pkgs; [
       pnpm
       typescript

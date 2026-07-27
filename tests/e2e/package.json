@@ -1,5 +1,5 @@
 {
-  "name": "@birdshit/tests/e2e",
+  "name": "@empory/tests/e2e",
   "version": "1.0.0",
   "description": "",
   "type": "module",
@@ -11,7 +11,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.28.0",
   "dependencies": {
-    "@birdshit/config": "workspace:*",
+    "@empory/config": "workspace:*",
     "@playwright/test": "1.56.0",
     "@types/node": "^26.0.0"
   }

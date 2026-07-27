@@ -1,5 +1,5 @@
-birdsht
-=======
+empory
+======
 
 Evil microblogging platform made by a human in Rust/axum + TypeScript/React.
 

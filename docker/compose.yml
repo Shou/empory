@@ -1,7 +1,7 @@
 services:
   db:
     build: ./postgres-pg_cron
-    container_name: birdshit-db
+    container_name: empory-db
     entrypoint: /entrypoint.sh
     environment:
       ENVIRONMENT: ${ENVIRONMENT}
