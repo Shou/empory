@@ -8,8 +8,12 @@ use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
 use strum::Display;
 
-use crate::{auth::middleware, errors::ServerError, models};
+use crate::{auth::middleware, models};
 use crate::db;
+use back::shared::{
+    db as dbt,
+    errors::ServerError
+};
 
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -63,7 +67,7 @@ pub async fn login(
     login_user: Json<LoginUser>,
 ) -> Result<(http::HeaderMap, Json<RefreshResponse>), (StatusCode, Json<ServerError<LoginError>>)> {
     println!("user = {:?}", &login_user);
-    let db::Db(pool) = app_state.pool;
+    let dbt::Db(pool) = app_state.pool;
     let (session_token, api_token) = crate::auth::middleware::login(
         &pool,
         &app_state.secret,
@@ -112,7 +116,7 @@ pub async fn logout(
     let base64value = cookie.value();
     let user_session_hash = Sha256::digest(cookie.value());
 
-    let crate::db::Db(pool) = app_state.pool;
+    let dbt::Db(pool) = app_state.pool;
     crate::db::revoke_user_session(&pool, user_session_hash.into())
         .await
         .map_err(|err| {
@@ -158,7 +162,7 @@ pub async fn refresh(
             (StatusCode::UNAUTHORIZED, http::HeaderMap::new(), Json(ServerError::new(RefreshError::LoggedOut, ())))
         })?;
     let user_session_hash = Sha256::digest(session_token);
-    let crate::db::Db(pool) = app_state.pool;
+    let dbt::Db(pool) = app_state.pool;
     let old_session = crate::db::get_user_session(&pool, user_session_hash.into())
         .await
         .map_err(|err| {
@@ -212,7 +216,7 @@ pub async fn register(
     }
 
     // check if user already exists
-    let db::Db(pool) = app_state.pool;
+    let dbt::Db(pool) = app_state.pool;
     if db::get_user_by_username(&pool, &user.username).await.is_ok() {
         return Err((StatusCode::BAD_REQUEST, Json(ServerError::new(RegisterError::UserAlreadyExists, ()))))
     }

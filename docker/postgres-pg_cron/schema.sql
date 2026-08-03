@@ -43,25 +43,32 @@ CREATE TABLE IF NOT EXISTS follows (
 CREATE TABLE IF NOT EXISTS timeline (
     user_id UUID NOT NULL,
     post_id UUID NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT (timezone('utc', now())),
+    created_at TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (user_id, post_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 CREATE INDEX timeline_feed_sorted ON timeline (user_id, created_at DESC);
 
-CREATE TABLE IF NOT EXISTS timeline_jobs (
+-- NOTE we avoid a completed_at by just deleting entries when finished
+-- if we need historical jobs we can add a separate table for that
+CREATE TABLE IF NOT EXISTS jobs (
     id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id UUID NOT NULL,
-    post_id UUID NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL,
-    queued_at TIMESTAMPTZ DEFAULT (timezone('utc', now())),
-    PRIMARY KEY (user_id, post_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
-);
+    type TEXT NOT NULL,
+    payload JSONB NOT NULL,
 
--- TODO partition
+    created_at TIMESTAMPTZ DEFAULT (timezone('utc', now())),
+    available_at TIMESTAMPTZ DEFAULT (timezone('utc', now())),
+    locked_at TIMESTAMPTZ,
+
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT
+);
+CREATE INDEX jobs_ready_idx
+ON jobs (type, available_at, id)
+WHERE locked_at IS NULL;
+
+-- TODO partition?
 CREATE TABLE IF NOT EXISTS likes (
     user_id UUID NOT NULL,
     post_id UUID NOT NULL,
@@ -71,7 +78,7 @@ CREATE TABLE IF NOT EXISTS likes (
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
--- TODO create table notifications
+-- TODO: CREATE TABLE notifications ( ... )
 
 CREATE TABLE IF NOT EXISTS avatars (
     id SERIAL PRIMARY KEY,
@@ -81,31 +88,4 @@ CREATE TABLE IF NOT EXISTS avatars (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-DROP MATERIALIZED VIEW IF EXISTS feed_posts;
-CREATE MATERIALIZED VIEW feed_posts AS
-SELECT
-    f.user_id AS feed_owner_id,
-    p.id AS post_id,
-    p.user_id AS author_id,
-    u.username AS author_username,
-    a.url AS avatar_url,
-    p.content AS post_content,
-    p.created_at AS post_created_at,
-    l.like_count AS like_count
-FROM follows f
-JOIN posts p ON p.user_id = f.followed_id
-JOIN users u ON u.id = p.user_id
-LEFT JOIN avatars a ON a.user_id = u.id
-LEFT JOIN (
-    SELECT post_id, COUNT(*) AS like_count FROM likes GROUP BY post_id
-) l on l.post_id = p.id;
-CREATE UNIQUE INDEX feed_posts_pk ON feed_posts (feed_owner_id, post_id);
-CREATE INDEX feed_posts_sorted_idx ON feed_posts (feed_owner_id, post_created_at DESC, post_id DESC);
-
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-
-SELECT cron.schedule(
-    'refresh-feeds',
-    '*/1 * * * *',
-    'REFRESH MATERIALIZED VIEW CONCURRENTLY feed_posts'
-);
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;

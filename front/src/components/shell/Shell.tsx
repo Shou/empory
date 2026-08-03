@@ -21,7 +21,7 @@ export function Header() {
     <div className="flex flex-row justify-between">
       <Link to="/">
         <h2 className="inline-flex p-2 text-transparent bg-clip-text font-bold bg-linear-to-r from-[#e3f1bd] via-[#f0f346] to-[#e3f1bd]">
-          BIRDSHIT
+          EMPORY
         </h2>
       </Link>
       <HeaderStatus />
@@ -37,7 +37,7 @@ export function Footer() {
           Made without ☕ (truly evil)
         </div>
         <div>
-          © Birdshit {(new Date).getFullYear()}
+          © Empory {(new Date).getFullYear()}
         </div>
       </div>
     </footer>

@@ -1,0 +1,49 @@
+
+name: CI Pipeline
+
+on:
+    push:
+        branches: [master]
+
+concurrency:
+    group: ci-${{ github.ref}}
+    cancel-in-progress: true
+
+jobs:
+    setup:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 11
+            - uses: actions/setup-node@v4
+              with:
+                node-version: 26
+                cache: 'pnpm'
+                cache-dependency-path: pnpm-lock.yaml
+            - working-directory: front
+              run: pnpm install --frozen-lockfile
+            - uses: actions/upload-artifact@v4
+              with:
+                name: node-modules
+                path: front/node_modules
+
+    checks:
+        needs: setup
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                command: [lint, type-check, test]
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 11
+            - uses: actions/setup-node@v4
+              with:
+                node-version: 26
+                cache: 'pnpm'
+                cache-dependency-path: front/pnpm-lock.yaml
+            - working-directory: front
+              run: pnpm ${{ matrix.command }}

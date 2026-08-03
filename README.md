@@ -40,6 +40,7 @@ To achieve production-grade, high-availability, horizontal scaling, etc targets 
 - CDN
 - Replace simple Rust queue with Kafka/RabbitMQ
 - Mitigate against API replay attacks
+- AWS Lambda serverless for media pipeline
 
 ## AI disclosure
 

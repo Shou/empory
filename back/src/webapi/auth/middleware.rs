@@ -1,7 +1,6 @@
 
 use axum::Json;
 use axum::extract::{State};
-use base64::prelude::*;
 use http::{StatusCode};
 use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
@@ -10,8 +9,8 @@ use sqlx::types::Uuid;
 use strum::IntoStaticStr;
 
 use crate::db;
-use crate::errors::ServerError;
-use crate::models::app_state::{AppState, JwtSecret};
+use crate::models::app_state::JwtSecret;
+use back::shared::errors::ServerError;
 
 
 #[derive(Debug, Serialize, Deserialize)]

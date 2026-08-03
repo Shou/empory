@@ -47,17 +47,22 @@ function RouteComponent() {
     console.log("sendPost")
     event.preventDefault()
 
-    const formData = new FormData(event.currentTarget)
+    const { currentTarget } = event
+    const formData = new FormData(currentTarget)
     const content = formData.get("content")
 
     if (!isFormDataString(content)) return
 
     startTransition(async () => {
       const token = await getToken()
-      PostsAPI.createPost(token, content).then(() => {
-        console.log("we postin shit")
-        // TODO refresh the posts view or smth...
-      })
+      await Promise.all([
+        PostsAPI.createPost(token, content).then(() => {
+          console.log("we postin shit")
+        }),
+        // Show loading for 500ms just because it feels nicer.
+        new Promise((accept) => setTimeout(() => accept(null), 500)),
+      ])
+      currentTarget.reset()
     })
   }
 
@@ -112,7 +117,7 @@ function RouteComponent() {
         </CardHeader>
         <CardContent>
           <form onSubmit={sendPost} className="flex flex-col">
-            <textarea name="content" placeholder="Post something new..." />
+            <textarea name="content" placeholder="Post something new..." disabled={isPosting} />
             {
               isPosting ? (
                 <Spinner />

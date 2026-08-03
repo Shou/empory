@@ -7,6 +7,10 @@ interface Avatar {
     avatar_url: string,
 }
 
+interface Me {
+    avatar_url: string,
+}
+
 
 export const avatarQuery = (userId: String) => queryOptions({
     queryKey: ["avatar", userId],
@@ -23,21 +27,6 @@ export const avatarQuery = (userId: String) => queryOptions({
     }
 })
 
-export const meQuery = queryOptions({
-    queryKey: ["me"],
-    queryFn: async (context) => {
-        const token = await getToken()
-        const url = BASE_URL + "/me"
-        const response = await fetch(url, {
-            method: "GET",
-            headers: {
-                "Authorization": "Bearer " + token,
-            },
-        })
-        return response.json()
-    },
-})
-
 // TODO mutation
 export const uploadAvatar = async (token: string, body: FormData): Promise<Avatar> => {
     const url = BASE_URL + "/profile/avatar"
@@ -50,3 +39,20 @@ export const uploadAvatar = async (token: string, body: FormData): Promise<Avata
     })
     return response.json()
 }
+
+async function meQueryFn(): Promise<Me | null> {
+    const token = await getToken()
+    if (token === null) return null
+    const url = BASE_URL + "/me"
+    const response = await fetch(url, {
+        method: "GET",
+        headers: {
+            "Authorization": "Bearer " + token,
+        },
+    })
+    return response.json()
+}
+export const meQuery = queryOptions({
+    queryKey: ["me"],
+    queryFn: meQueryFn,
+})

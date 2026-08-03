@@ -5,9 +5,14 @@ use axum::{
 use http::{StatusCode};
 use serde::{Deserialize, Serialize};
 
-use crate::{errors::ServerError, models::user::UserId};
-use crate::models::post::{PostId};
+use crate::{db::JobTimelinePayload, models::user::UserId};
+use crate::models::post::PostId;
 use crate::db;
+use back::shared::{
+    db as dbt,
+    worker_api,
+    errors::ServerError,
+};
 
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -51,7 +56,7 @@ pub async fn get_posts(
         (StatusCode::BAD_REQUEST, Json(ServerError::new(err, ())))
     })?;
 
-    let db::Db(db) = app_state.pool;
+    let dbt::Db(db) = app_state.pool;
     let method = if let Some((before_at, before_post_id)) = cursor_opt {
         db::get_all_posts_page(&db, &before_at, &before_post_id).await
     } else {
@@ -79,7 +84,7 @@ pub async fn get_user_posts(
         (StatusCode::BAD_REQUEST, Json(ServerError::new(err, ())))
     })?;
 
-    let db::Db(db) = app_state.pool;
+    let dbt::Db(db) = app_state.pool;
     let method = if let Some((before_at, before_post_id)) = cursor_opt {
         db::get_posts_by_user_id_page(&db, &user_id, &before_at, &before_post_id).await
     } else {
@@ -106,7 +111,7 @@ pub async fn get_full_posts(
         (StatusCode::BAD_REQUEST, Json(ServerError::new(err, ())))
     })?;
 
-    let db::Db(db) = app_state.pool;
+    let dbt::Db(db) = app_state.pool;
     let posts: Vec<_> = db::get_all_posts_latest(&db)
         .await
         .map_err(|err| {
@@ -131,7 +136,7 @@ pub async fn get_feed(
         (StatusCode::BAD_REQUEST, Json(ServerError::new(err, ())))
     })?;
 
-    let db::Db(db) = app_state.pool;
+    let dbt::Db(db) = app_state.pool;
     let method = if let Some((before_at, before_post_id)) = cursor_opt {
         db::get_feed_posts_page(&db, &user_id, &before_at, &before_post_id).await
     } else {
@@ -157,13 +162,37 @@ pub async fn create_post(
         return Err((StatusCode::BAD_REQUEST, "pigeon needs ozempic"))
     }
 
-    let db::Db(db) = app_state.pool;
-    let post = db::insert_post(&db, &user_id, &create_post.content)
+    let dbt::Db(db) = app_state.pool;
+    let query = r#"
+        WITH new_post AS (
+            INSERT INTO posts (user_id, content) VALUES ($1, $2) RETURNING *
+        ),
+        new_job AS (
+            INSERT INTO jobs (type, payload)
+            SELECT
+                'timeline',
+                jsonb_build_object(
+                    'post_id', id,
+                    'user_id', user_id
+                )
+            FROM new_post
+        )
+        SELECT *
+        FROM new_post;
+    "#;
+    let post: db::Post = sqlx::query_as(query)
+        .bind(user_id)
+        .bind(&create_post.content)
+        .fetch_one(&db)
         .await
         .map_err(|err| {
             println!("{:?}", err);
             (StatusCode::UNAUTHORIZED, "pigeon not here")
         })?;
+
+    let worker_url: String = format!("http://{}:{}", app_state.worker.host, app_state.worker.port);
+    let worker_resp = worker_api::create_job(&app_state.client, worker_url, &post.id.to_uuid()).await;
+    println!("worker response = {:?}", worker_resp);
 
     Ok(Json(post))
 }
@@ -176,7 +205,7 @@ pub async fn like_post(
 ) -> Result<Json<db::Like>, (StatusCode, &'static str)> {
     println!("like_post | {:?} = {:?}", &user_id, &post_id);
 
-    let db::Db(db) = app_state.pool;
+    let dbt::Db(db) = app_state.pool;
     let like = db::insert_like(&db, &user_id, &post_id)
         .await
         .map_err(|err| {
@@ -195,7 +224,7 @@ pub async fn unlike_post(
 ) -> Result<Json<db::Like>, (StatusCode, &'static str)> {
     println!("unlike_post | {:?} = {:?}", &user_id, &post_id);
 
-    let db::Db(db) = app_state.pool;
+    let dbt::Db(db) = app_state.pool;
     let like = db::delete_like(&db, &user_id, &post_id)
         .await
         .map_err(|err| {

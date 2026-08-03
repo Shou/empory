@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::user::{UserId};
 use crate::db;
+use back::shared::db as dbt;
 
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -23,7 +24,7 @@ pub async fn follow_user(
 ) -> Result<Json<db::Follow>, (StatusCode, &'static str)> {
     println!("follow_user | {:?} = {:?}", &user_id, &followed_id);
 
-    let db::Db(pool) = app_state.pool;
+    let dbt::Db(pool) = app_state.pool;
     let follow = db::follow_user(&pool, &user_id, &followed_id)
         .await
         .map_err(|err| {
@@ -42,7 +43,7 @@ pub async fn unfollow_user(
 ) -> Result<Json<db::Follow>, (StatusCode, &'static str)> {
     println!("follow_user | {:?} = {:?}", &user_id, &followed_id);
 
-    let db::Db(pool) = app_state.pool;
+    let dbt::Db(pool) = app_state.pool;
     let follow = db::unfollow_user(&pool, &user_id, &followed_id)
         .await
         .map_err(|err| {
@@ -60,7 +61,7 @@ pub async fn get_followers(
 ) -> Result<Json<Vec<db::Follow>>, (StatusCode, &'static str)> {
     println!("get_followers | {:?}", &followed_id);
 
-    let db::Db(pool) = app_state.pool;
+    let dbt::Db(pool) = app_state.pool;
     let follows = db::get_follows(&pool, &followed_id)
         .await
         .map_err(|err| {

@@ -21,6 +21,8 @@
             postman
             playwright-driver.browsers
             terraform terraform-ls
+            openssl
+            act
           ];
 
           shellHook = ''

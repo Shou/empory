@@ -1,23 +1,10 @@
-use axum::extract::{FromRef};
 use serde::{Deserialize, Serialize};
 use sqlx::{
-    postgres::PgPoolOptions,
     PgPool,
 };
 use uuid::Uuid;
 use sqlx::types::chrono;
 
-#[derive(Clone)]
-pub struct Config {
-    admin: String,
-    password: String,
-    url: String,
-    port: String,
-    database: String,
-}
-
-#[derive(Clone, FromRef)]
-pub struct Db(pub PgPool);
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
@@ -51,16 +38,20 @@ pub struct Like {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-
-pub async fn get_pool(config: &Config) -> PgPool {
-    let url = format!("postgres://{}:{}@{}:{}/{}", config.admin, config.password, config.url, config.port, config.database);
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&url)
-        .await
-        .expect("fail 2 cnct psql");
-    pool
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct Follow {
+    pub user_id: Uuid,
+    pub followed_id: Uuid,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
+
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct JobTimelinePayload {
+    pub user_id: crate::models::user::UserId,
+    pub post_id: crate::models::post::PostId,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
 
 pub async fn insert_user(pool: &PgPool, username: &String, email: &String, hpass: &String) -> Result<User, sqlx::Error> {
     sqlx::query_as("INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *")
@@ -203,13 +194,6 @@ pub async fn insert_avatar(pool: &PgPool, user_id: &Uuid, avatar_url: String) ->
         .await
 }
 
-#[derive(Serialize, Deserialize, sqlx::FromRow)]
-pub struct Follow {
-    pub user_id: Uuid,
-    pub followed_id: Uuid,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-}
-
 pub async fn follow_user(pool: &PgPool, user_id: &Uuid, target_user_id: &Uuid) -> Result<Follow, sqlx::Error> {
     sqlx::query_as("INSERT INTO follows (user_id, followed_id) VALUES ($1, $2) RETURNING *")
         .bind(user_id)
@@ -264,17 +248,4 @@ pub async fn revoke_user_session(pool: &PgPool, token_hash: [u8; 32]) -> Result<
         .bind(token_hash)
         .fetch_one(pool)
         .await
-}
-
-
-pub async fn connect() -> (Db, Config) {
-    let config = Config {
-        admin: std::env::var("POSTGRES_USER").expect("DATABASE_USER missing in .env"),
-        password: std::env::var("POSTGRES_PASSWORD").expect("DATABASE_PASSWORD missing in .env"),
-        url: std::env::var("POSTGRES_URL").expect("DATABASE_URL missing in .env"),
-        database: std::env::var("POSTGRES_DB").expect("POSTGRES_DB missing in .env"),
-        port: std::env::var("POSTGRES_PORT").expect("POSTGRES_PORT missing in .env"),
-    };
-
-    (Db(get_pool(&config).await), config)
 }

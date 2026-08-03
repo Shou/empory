@@ -3,17 +3,18 @@ pub mod auth;
 pub mod db;
 pub mod models;
 pub mod routes;
-pub mod errors;
-pub mod worker;
 
 use axum::{
     Router, extract::DefaultBodyLimit, routing::{delete, get, post}
 };
+use base64::prelude::*;
+use ed25519_dalek::SigningKey;
 use tokio::net::TcpListener;
 use tower_http::{trace::TraceLayer};
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber;
-use models::app_state::{JwtSecret, AppState};
+use models::app_state::{JwtSecret, AppState, WorkerConfig};
+use back::shared::{db as dbt, worker_api::ClientConfig};
 
 
 #[tokio::main]
@@ -31,7 +32,7 @@ async fn main() {
         panic!("failed to load S3 endpoint from env")
     };
 
-    let (pool, config) = db::connect().await;
+    let (pool, config) = dbt::connect().await;
     let Ok(s3) = s3::Client::builder(s3endpoint)
         .and_then(|client| {
             let env_auth = s3::Auth::from_env()?;
@@ -43,13 +44,38 @@ async fn main() {
         }) else {
             panic!("failed to load S3 credentials from env")
         };
+
+    let http_client = reqwest::Client::new();
+    let Some(key_bytes) = std::env::var("BACK_SECRET").ok().and_then(|secret| {
+        BASE64_STANDARD.decode(secret).ok()
+    }) else {
+        panic!("failed to load worker secret from env")
+    };
+    let client = ClientConfig {
+        client: http_client,
+        key: SigningKey::from_bytes(&key_bytes.try_into().unwrap()),
+    };
+
+    let worker = {
+        let Ok(host) = std::env::var("WORKER_HOST") else {
+            panic!("failed to load worker host from env")
+        };
+        let Some(port) = std::env::var("WORKER_PORT").ok().and_then(|s| s.parse::<i32>().ok()) else {
+            panic!("failed to load worker host from env")
+        };
+        WorkerConfig {
+            host,
+            port,
+        }
+    };
     
-    let wpool = pool.clone();
     let state = AppState {
         pool,
         config,
         secret,
         s3,
+        client,
+        worker,
     };
 
     tracing_subscriber::fmt()
@@ -102,10 +128,6 @@ async fn main() {
         .layer(tower_cookies::CookieManagerLayer::new())
         .layer(DefaultBodyLimit::max(1024 * 1024))
         .with_state(state);
-
-    tokio::spawn(async move {
-        worker::timeline_worker(wpool).await;
-    });
 
     let url = "0.0.0.0:".to_string() + &std::env::var("BACK_PORT").unwrap_or("3000".to_string());
     let listener = TcpListener::bind(url).await.unwrap();

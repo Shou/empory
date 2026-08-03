@@ -8,8 +8,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use strum::Display;
 
-use crate::{errors::ServerError, models::user::UserId};
+use crate::models::user::UserId;
 use crate::db;
+use back::shared::{
+    db as dbt,
+    errors::ServerError,
+};
 
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
@@ -24,7 +28,7 @@ pub async fn get_avatar(
 ) -> Result<Json<Avatar>, (StatusCode, Json<serde_json::Value>)> {
     println!("get_avatar | {:?}", &user_id);
 
-    let db::Db(db) = app_state.pool;
+    let dbt::Db(db) = app_state.pool;
     let avatar = db::get_avatar(&db, &user_id)
         .await
         .map_err(|err| {
@@ -73,7 +77,7 @@ pub async fn upload_avatar(
 
     let avatar_url = format!("/avatars/{}", String::from(user_id));
 
-    let db::Db(db) = app_state.pool;
+    let dbt::Db(db) = app_state.pool;
     let avatar = db::insert_avatar(&db, &user_id, avatar_url)
         .await
         .map_err(|err| {
@@ -117,7 +121,7 @@ pub async fn get_status(
     println!("get_avatar | {:?}", &user_id);
 
     let mut status: Status = Status::Verification;
-    let db::Db(db) = app_state.pool;
+    let dbt::Db(db) = app_state.pool;
 
     let user = db::get_user_by_id(&db, &user_id.to_uuid()).await.map_err(|err| {
         println!("get_status db err = {:?}", err);

@@ -15,7 +15,7 @@ export type LoginUser = {
 
 export const registerMutation = mutationOptions({
     mutationFn: async ({ email, username, password }: RegisterUser) => {
-        const url = BASE_URL + "/auth/login"
+        const url = BASE_URL + "/auth/register"
         const body: RegisterUser = {
             email,
             username,

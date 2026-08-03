@@ -13,7 +13,7 @@ export function RegisterComponent() {
     ...Auth.registerMutation,
     onSuccess: async (json) => {
       queryClient.setQueryData(["refresh"], json)
-      await navigate({ to: "/feed" })
+      await navigate({ to: "/onboarding" })
     },
   })
   const onSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
